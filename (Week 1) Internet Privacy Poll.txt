@@ -1,0 +1,61 @@
+#Internet privacy has gained widespread attention in recent years. To measure the degree #to which people are concerned about hot-button issues like Internet privacy, social #scientists conduct polls in which they interview a large number of people about the #topic. In this assignment, we will analyze data from a July 2013 Pew Internet and #American Life Project poll on Internet anonymity and privacy, which involved interviews #across the United States.
+
+#Read in the dataset for ‘AnonymityPoll.csv’
+#Load and summarize the Dataset
+
+poll = read.csv("AnonymityPoll.csv")
+poll <- AnonymityPoll
+
+#Summary stats
+str(poll)
+
+#How many have a smartphone?
+table(poll$Smartphone)
+summary(poll$Smartphone) 
+
+table(poll$Sex, poll$Region)
+table(poll$State, poll$Region)
+
+MidwestInterviewees = subset(poll, Region=="Midwest")
+table(MidwestInterviewees$State)
+
+#Internet and Smartphone Users
+table(poll$Internet.Use, poll$Smartphone)
+summary(poll)
+
+#Produce a dataframe called "limited", which is limited to interviewees who reported #Internet use or who reported smartphone use.
+limited = subset(poll, Internet.Use == 1 | Smartphone == 1)
+summary(limited)
+nrow(limited)
+
+#Find missing values for each variable from the limited data frame
+summary(limited)
+
+#What is the average number of pieces of personal information on the Internet, according #to the Info.On.Internet variable?
+
+mean(limited$Info.On.Internet) 
+summary(limited$Info.On.Internet)
+table(limited$Info.On.Internet)
+
+#Summarizing Opinions about Internet Privacy
+table(limited$Info.On.Internet)
+table(limited$Worry.About.Info)
+table(limited$Anonymity.Possible)
+table(limited$Tried.Masking.Identity)
+table(limited$Privacy.Laws.Effective)
+
+#Relating Demographics to Polling Results
+hist(limited$Age)
+plot(limited$Age, limited$Info.On.Internet)
+
+table(limited$Age, limited$Info.On.Internet)
+max(table(limited$Age, limited$Info.On.Internet))
+
+plot(jitter(limited$Age), jitter(limited$Info.On.Internet))
+
+#Obtain the summary of the Info.On.Internet value, broken down by whether an interviewee #is a smartphone user
+tapply(limited$Info.On.Internet, limited$Smartphone, summary)
+
+# Get summary of the Tried.Masking.Identit variable , broken down by whether an interviewee is a #smartphone user.
+tapply(limited$Tried.Masking.Identity, limited$Smartphone, table)
+tapply(limited$Tried.Masking.Identity, limited$Smartphone, summary)
