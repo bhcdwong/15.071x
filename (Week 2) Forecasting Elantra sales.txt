@@ -1,0 +1,42 @@
+# Loading data
+View(elantra)
+Elantra<-elantra
+data(Elantra)
+
+#Split the data using the subset function:
+ElantraTrain = subset(Elantra, Year <= 2012)
+ElantraTest = subset(Elantra, Year > 2012)
+
+#Build linear regression model to predict monthly Elantra sales using Unemployment, #CPI_all, CPI_energy and Queries as the independent variables.
+ElantraLM = lm(ElantraSales ~ Unemployment + Queries + CPI_energy + CPI_all, data=ElantraTrain)
+
+summary(ElantraLM)
+
+#Rebuild the model again and include Month as an independent variable:
+ElantraLM = lm(ElantraSales ~ Unemployment + Queries + CPI_energy + CPI_all + Month, data=ElantraTrain)
+
+summary(ElantraLM)
+
+#Create a new variable that is a factor version of the Month variable
+ElantraTrain$MonthFactor = as.factor(ElantraTrain$Month)
+ElantraTest$MonthFactor = as.factor(ElantraTest$Month)
+
+#Rebuild the model using the lm function
+
+ElantraLM = lm(ElantraSales ~ Unemployment + Queries + CPI_energy + CPI_all + MonthFactor, data=ElantraTrain)
+summary(ElantraLM)
+
+#Compute the correlations
+cor(ElantraTrain[c("Unemployment","Month","Queries","CPI_energy","CPI_all")])
+
+#Obtain predictions on the test set by using the predict function
+PredictTest = predict(ElantraLM, newdata=ElantraTest)
+
+SSE = sum((PredictTest - ElantraTest$ElantraSales)^2)
+SST = sum((mean(ElantraTrain$ElantraSales) - ElantraTest$ElantraSales)^2)
+
+#Absolute error
+max(abs(PredictTest - ElantraTest$ElantraSales))
+
+#Fine the period (Month,Year pair) where we make the largest absolute error in our #prediction
+which.max(abs(PredictTest - ElantraTest$ElantraSales))
