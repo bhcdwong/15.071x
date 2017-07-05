@@ -1,0 +1,49 @@
+#Load Dataset
+View(parole)
+
+#No. of parolees in the dataset that violated the terms of parole
+table(parole$violator)
+
+#Splitting into Training and Testing Sets
+
+set.seed(144)
+library(caTools)
+split = sample.split(parole$violator, SplitRatio = 0.7)
+
+train = subset(parole, split == TRUE)
+test = subset(parole, split == FALSE)
+
+#Produce the logistic regression model using all variables
+mod = glm(violator~., data=train, family="binomial")
+summary(mod)
+
+#Building a Logistic Regression Model
+#Consider a parolee who is male, of white race, aged 50 years at prison release, from the #state of Maryland, served 3 months, had a maximum sentence of 12 months, did not commit #multiple offenses, and committed a larceny. Answer the following questions based on the #model's predictions for this individual. 
+
+#According to the model, what are the odds this individual is a violator?
+#According to the model, what is the probability this individual is a violator?
+
+#From the logistic regression equation, we have 
+log(odds) = -4.2411574 + 0.3869904*male + 0.8867192*race - 0.0001756*age + 0.4433007*state2 + 0.8349797*state3 - 3.3967878*state4 - 0.1238867*time.served + 0.0802954*max.sentence + 1.6119919*multiple.offenses + 0.6837143*crime2 - 0.2781054*crime3 - 0.0117627*crime4. 
+
+This parolee has male=1, race=1, age=50, state2=0, state3=0, state4=0, time.served=3, max.sentence=12, multiple.offenses=0, crime2=1, crime3=0, crime4=0. We conclude that log(odds) = -1.700629.
+Therefore, the odds ratio is exp(-1.700629) = 0.183, and the predicted probability of violation is 1/(1+exp(1.700629)) = 0.154.
+
+
+#Evaluating the Model on the Testing Set
+predictions = predict(mod, newdata=test, type="response")
+summary(predictions)
+
+#model's sensitivity, specificity, accuracy
+table(test$violator, as.numeric(predictions >= 0.5))
+accuracy is (167+12)/202 = 0.886
+sensitivity is 12/(11+12) = 0.522 specificity is 167/(167+12) = 0.933
+
+#accuracy of a simple model that predicts that every parolee is a non-violator
+table(test$violator)
+179/202 = 0.886
+
+#AUC value for the model
+library(ROCR)
+pred = prediction(predictions, test$violator)
+as.numeric(performance(pred, "auc")@y.values)
