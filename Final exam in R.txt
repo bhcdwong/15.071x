@@ -1,0 +1,315 @@
+#FORECASTING NATIONAL PARKS VISITS
+#Problem 1 - Number of National Parks in Jan 2016
+#Load data
+#Subset the observations to this year and month, name it ‘visits2016jul’
+#Use the table command to tabulate the counts by park types, and which.max to find the one #with maximum number of log visits.
+
+View(park_visits)
+visits<-park_visits
+visits2016 = subset(visits, visits$Year=="2016")
+visits2016jul = subset(visits2016, visits$Month=="7")
+table(visits2016jul$ParkType)
+which.max(visits2016jul$logVisits)
+
+#What is the average log visits for the region in July 2016 with:
+tapply(visits2016jul$Region, visits2016jul$logVisits, mean)
+
+#What is the correlation between entrance fee and the log visits in July 2016? 
+cor(visits2016jul$cost, visits2016jul$logVisits)
+
+#Time Series Plot of Visits
+#Let's look at the time dimension of the data. Subset the original data (visits) to #"Yellowstone NP" only and save as ys. Use the following code to plot the logVisits #through the months between 2010 and 2016:
+ys_ts=ts(ys$logVisits,start=c(2010,1),freq=12)
+
+plot(ys_ts)
+
+#There are some NA's in the data, run colSums(is.na(visits)) to see the summary.
+
+#Why do we have NA's in the laglogVisits and laglogVisitsYear? 
+#These variables were created by lagging the log visits by a month or by a year.
+
+#To deal with the missing values, we will simply remove the observations with the missing #values first (there are more sophisticated ways to work with missing values, but for this #purpose removing the observations is fine). Run the following:
+
+visits = visits[rowSums(is.na(visits)) == 0, ]
+now(visits)
+
+#Predicting Visits
+#We are interested in predicting the log visits. Before doing the split, let's also make #Month a factor variable by including the following:
+
+visits$Month = as.factor(visits$Month)
+
+#Subset our dataset into a training and a testing set by splitting based on the year: #training would contain 2010-2014 years of data, and testing would be 2015-2016 data.
+
+train = subset(visits, visits$Year <= 2014)
+test = subset(visits, visits$Year > 2014)
+
+#Run the linear regression with lm and look at the summary.
+#Then calculate the out-of-sample R2 using the test data.
+
+model_1  = lm(visits$logVisits ~ , data=train)
+summary(model_1 )
+
+#Add New Variables to improve the model
+#The new model would have the following variables:
+#laglogVisits, laglogVisitsYear, Year, Month, Region, ParkType, and cost
+#Looking at the model summary, which of the following statements are correct (significance #at 0.05 level)?
+#Run lm with new set of variables, summary on the model, and look at the signif.variables.
+#Calculate the out-of-sample R2 using the testing data with new model.
+
+model_2  = lm(visits$logVisits ~ visits$laglogVisits + visits$laglogVisitsYear  +visits$Year + visits$Month + visits$Region + visits$ParkType visits$cost, data=train)
+summary(model_2 )
+
+#Regression Trees
+#Use the same set of variables as the previous problem (laglogVisits, laglogVisitsYear, #Year, Month, Region, ParkType, and cost), train a regression tree with cp = 0.05.
+#Looking at the plot of the tree, how many different predicted values are there?
+#Run with rpart function and look at the prp plot. Calculate out-of-sample R2 based on #this new model.
+
+set.seed(144)
+library(caret)
+library(e1071)
+library(rpart)
+library(rpart.plot)
+
+tree = rpart(visits$logVisits ~ visits$laglogVisits + visits$laglogVisitsYear  +visits$Year + visits$Month + visits$Region + visits$ParkType visits$cost, data=train, control=rpart.control(cp = 0.05))
+
+prp(tree)
+
+#Regression Trees with CV
+#The out-of-sample R2 does not appear to be very good under regression trees, compared to #a linear regression model. We could potentially improve it via cross validation.
+#Set seed to 201, run a 10-fold cross-validated cart model, with cp ranging from 0.0001 to #0.005 in increments of 0.0001. 
+#Use train function from caret package with tuneGrid=expand.grid(cp=seq(0.0001, #0.005,0.0001).
+
+# Load libraries for cross-validation, see PS4
+library(caret)
+library(e1071)
+set.seed(201)
+#By looking at the plot, the R2 seems to get worse starting from 0.0001, therefore smaller #values of cp may give better validation results.
+
+fitControl = trainControl( method = "cv", number = 10 )
+tuneGrid=expand.grid(cp=seq(0.0001, 0.005, 0.0001)
+
+#Rerun the regression tree on the training data, now using the cp value = 0.0001. #Calculate the out-of-sample R2 using the test data.
+
+CARTmodel = rpart(visits$logVisits ~ visits$laglogVisits + visits$laglogVisitsYear  +visits$Year + visits$Month + visits$Region + visits$ParkType visits$cost, data=train, control=rpart.control(cp = 0.0001)
+
+#Random Forest
+#We can potentially further improve the models by using a random forest. Set seed to 201 #again. Train a random forest model with the same set of covariates, and using just #default parameters (no need to specify). 
+#R2 on the testing set for the random forest model
+#Use the randomForest package and function to train the model. Calculate the out-of-sample #R2 using the testing data.
+
+set.seed(201)
+library(randomForest)
+randFor =randomForest(visits$logVisits ~ visits$laglogVisits + visits$laglogVisitsYear  +visits$Year + visits$Month + visits$Region + visits$ParkType visits$cost, data=train)
+
+#PREDICTING BANK TELEMARKETING SUCCESS
+#The success of marketing campaigns can be highly specific to the product, the target #audience, and the campaign methods. In this problem, we look at data from the direct #marketing campaigns of a Portuguese banking institution between May 2008 and Nov 2010. #The marketing campaigns were based on phone calls. 
+
+#Load the Data, call it bank
+#What is the average age in the data set?
+
+View(bank)
+summary(bank)
+tapply(bank$age, mean)
+
+#Build a boxplot that shows the call duration distributions over different jobs. Which #three jobs have the longest average call durations? 
+tapply(bank$duration, bank$job, mean)
+
+#As good practice, it is always helpful to first check for multicolinearity before running #models, especially since this dataset contains macroeconomic indicators. Examine the #correlation between the following variables: emp.var.rate, cons.price.idx, cons.conf.idx, #euribor3m, and nr.employed.
+
+cor(,)
+
+#Splitting into a Training and Testing Set
+#Obtain a random training/testing set split with:
+
+set.seed(201)
+library(caTools)
+spl = sample.split(bank$y, 0.7)
+
+#Split months into a training data frame called "training" use observations for which spl #is TRUE and a testing data frame called "testing" use observations for which spl is #FALSE.
+training = subset(bank, split==T)
+testing = subset(bank, split==F)
+
+#Training a Logistic Regression Model
+#Train a logistic regression model using independent variables age, job, marital, #education, default, housing, loan, contact, month, day_of_week, campaign, pdays, #previous, poutcome, emp.var.rate, cons.price.idx, and cons.conf.idx, using the training #set to obtain the model. Notice that we have removed duration (since it's not available #before the call, so shouldn't be used in a strictly predictive model), euribor3m and #nr.employed (due to multicolinearity issue).
+#The model can be trained with the glm function (remember the argument family="binomial") #and summarized with the summary function.
+
+logFit <- glm(y ~ ge + job + marital + education + default + housing + loan + contact + month + day_of_week + campaign + pdays + previous + poutcome + emp.var.rate + cons.price.idx + cons.conf.idx, data=training, family=binomial)
+ 
+summary(logFit)
+
+#Interpreting Model Coefficients
+#What is the meaning of the coefficient labeled "monthmar" in the logistic regression #summary output?
+#The coefficients of the model are the log odds associated with that variable; so we see #that the odds of subscribing are exp(1.286)=3.618284 those of an otherwise identical #contact. This means the contact is predicted to have 3.618284-1=2.618284 higher odds of #subscribing.
+ 
+#Obtaining Test Set Predictions
+#Using your logistic regression model, obtain predictions on the test set. Then, using a #probability threshold of 0.5, create a confusion matrix for the test set.
+
+#We would like to compare the predictions obtained by the logistic regression model and #those obtained by a naive baseline model. Remember that the naive baseline model we use #in this class always predicts the most frequent outcome in the training set for all #observations in the test set.
+#Obtain test-set predictions with the predict function, remembering to pass #type="response". Using table, you can see that there are 94 test-set predictions with #probability less than 0.5.
+ 
+logTestPredicts <- predict(logFit, newdata=testing, method="response")
+table(testing$y)
+which.max(table(training$y))
+
+#What is the test-set AUC of the logistic regression model?
+library(ROCR)
+logPred <- prediction(logTestPredicts, testing$y)
+as.numeric(performance(logPred,"auc")@y.values)
+ 
+#What is the meaning of the AUC?
+#The proportion of the time the model can differentiate between a randomly selected client #who subscribed to a term deposit and a randomly selected client who did not subscribe .
+#The AUC is the proportion of time the model can differentiate between a randomly selected #true positive and true negative.
+
+#ROC curves
+#Which logistic regression threshold is associated with the upper-right corner of the ROC #plot (true positive rate 1 and false positive rate 1)?
+#A model with threshold 0 predicts 1 for all observations, yielding a 100% true positive #rate and a 100% false positive rate.
+
+#Plot the colorized ROC curve for the log regression model's performance on the test set.
+#You can plot the colorized curve by using the plot function, and adding the argument #colorize=TRUE.
+logicPerf <- performance(logPred,"tpr","fpr")
+plot(logicPerf, colorize=TRUE)
+#From the colorized curve, we can see that the light turqoise color, corresponding to #cutoff 0.11, is associated with a true positive rate of about 0.60 and false positive #rate of about 0.25.
+
+#What is the number of test set observations where the prediction from the logistic #regression model is different than the prediction from the baseline model?
+ 
+#Cross-Validation to Select Parameters
+#Which of the following best describes how 10-fold cross-validation works when selecting #between 4 different parameter values?
+#In 10-fold cross validation, the model with each parameter setting will be trained on ten #90% subsets of the training set. Hence, a total of 40 models will be trained. The models #are evaluated in each case on the last 10% of the training set (not on the testing set).
+ 
+#Cross-Validation for a CART Model
+#Set the random seed to 201 (even though you have already done so earlier in the problem). #Then use the caret package and the train function to perform 10-fold cross validation #with the training data set to select the best cp value for a CART model that predicts the #dependent variable y using the same set of independent variables as in the logistic #regression (Problem 5). Select the cp value from a grid consisting of the 50 values #0.001, 0.002, ..., 0.05.
+
+#What cp value maximizes the cross-validation accuracy?
+#The cross-validation can be run by first setting the grid of cp values with the #expand.grid function and setting the number of folds with the trainControl function. Then #you want to use the train function to run the cross-validation.
+
+ 
+set.seed(201)
+library(caret)
+numFolds <- trainControl(method = "cv", number = 10)
+grid <- expand.grid(.cp = seq(0.001,0.05, 0.001))
+train(y ~ ge + job + marital + education + default + housing + loan + contact + month + day_of_week + campaign + pdays + previous + poutcome + emp.var.rate + cons.price.idx + cons.conf.idx, data=training, method="rpart", trControl=numFolds, tuneGrid=grid)
+
+#From the output of the train function, parameter value 0.016 yields the highest cross-#validation accuracy.
+ 
+#Train CART Model
+#Build and plot the CART model trained with the parameter identified in Problem 13, again #predicting the dependent variable using the same set of independent variables. What #variable is used as the first (upper-most) split in the tree?
+#The CART model can be trained and plotted by first loading the "rpart" and "rpart.plot" #packages, and then using the rpart function to build the model and the prp function to #plot the tree.
+ 
+#Test-Set Accuracy for CART Model
+#Using the CART model you created in Problem 14, obtain predictions on the test set (using #the parameter type="class" with the predict function). Then, create a confusion matrix #for the test set.
+
+cart <- rpart(y ~ ge + job + marital + education + default + housing + loan + contact + month + day_of_week + campaign + pdays + previous + poutcome + emp.var.rate + cons.price.idx + cons.conf.idx,data=training, method="class", cp=0.005)
+library(rpart.plot)
+prp(cart)
+
+#What is the accuracy of your CART model?
+#The test set predictions can be obtained using the predict function. The confusion matrix #can be obtained using the table function.
+#From the table, calculate the accuracy by summing the diagonal and divide by total.
+ 
+ 
+#UNDERSTANDING GROCERY SHOPPING BEHAVIOR
+#Load dataset orders.csv
+#Read the dataset orders.csv into R as orders
+View(orders)
+hist(orders$order_hour_of_day) 
+sum(orders$days_since_prior_order)/5000
+ 
+#Descriptive Statistics
+#What's the correlation between the orders of "fresh.fruits" and "fresh.vegetables"?
+cor(orders$fresh.fruits ,orders$fresh.vegetables)
+#In the dataset, what proportion of orders have at least one item from the frozen.pizza #aisle?
+
+#Normalizing the Data
+#Use only the information about the aisles for the clustering. Run the following command #to construct a subset of only aisle information on the orders:
+
+orders.aisle = orders[, 5:ncol(orders)]
+
+#It is not necessary to normalize the data, since all the aisle counts are on the same #unit (number of items from each aisle). However, due to the relatively large values for #fresh fruits and vegetables, it might be a good idea to nevertheless normalize the data. #Normalize all of the variables in the orders.aisle dataset by entering the following #commands:
+
+library(caret)
+preproc = preProcess(orders.aisle)
+ordersNorm = predict(preproc, orders.aisle)
+ 
+#You can normalize the dataset by using the preProcess and predict functions in the #"caret" package. You can then find the max. and min. values of the variables by using the #summary function on the whole dataset or on the selected variables.
+ 
+#Run the following code to create a dendrogram of your data:
+
+distances <- dist(ordersNorm, method = "euclidean")
+ClusterProducts <- hclust(distances, method = "ward.D")
+plot(ClusterProducts, labels = FALSE)
+ 
+#K-means Clustering
+#Run the k-means clustering algorithm on your dataset limited to the aisle information #only, selecting 4 clusters. Right before using the kmeans function, type "set.seed(200)" #in your R console.
+#Run kmeans clustering with the "kmeans" function, and count the number of observations in #each cluster by running the table function on the "cluster" attribute of the resulting #object.
+
+set.seed(2000)
+KMC = kmeans(ordersNorm, centers = 4, iter.max = 1000)
+str(KMC)
+ 
+#Use tapply to summarize each cluster and sort to see the most frequent aisle names. #Alternatively, you can use the wordcloud package to visualize what are the most common #aisle names appearing in each cluster.
+#You can use the "centers" attribute of the clustering output to answer this question, or #the tapply function.
+#Use rowSums on the centers to find the one with smallest amount of items ordered.
+
+#Random Behavior
+#If we ran hierarchical clustering a second time without making any additional calls to #set.seed, we would expect:Identical results to the first hierarchical clustering
+
+#If we ran k-means clustering a second time without making any additional calls to #set.seed, we would expect:Different results from the first k-means clustering
+
+#If we ran k-means clustering a second time, again running the command set.seed(200) right #before doing the clustering, we would expect:Identical results to the first k-means #clustering
+
+#If we ran k-means clustering a second time, running the command set.seed(100) right #before doing the clustering, we would expect: Different results from the first k-means #clustering
+
+#For hierarchical clustering, we expect to always get identical results since there is no #randomness involved.
+#For k-means, we expect to get identical results if we set the seed to the same value as #before right before the clustering. We expect to get different results if we don't set #the seed, or if we set it to a different value from before.
+
+#Use the tapply function to see the other descriptive information available about each #order (day of the week, hour of the day, days since prior order) and see if they also #differ by cluster, even though we did not use them as clustering variables.
+
+set.seed(2000)
+KMC = kmeans(ordersNorm, centers = 4, iter.max = 1000)
+str(KMC)
+tapply(orders$order_dow, KMC$cluster, mean)
+tapply(orders$order_hour_of_day, KMC$cluster, mean)
+tapply(orders$days_since_prior_order, KMC$cluster, mean)
+
+#Understanding Centroids
+#Why do we typically use cluster centroids to describe the clusters?
+#The cluster centroid captures the average behavior in the cluster, and can be used to #summarize the general pattern in the cluster.
+#- it does not describe every single observation in that cluster or tell us how the #cluster compares to other clusters.
+
+#Visualisation
+#A box plot of days_since_prior_order shows the distribution of the number of visits of #the households, and we want to subdivide by cluster. Alternatively, ggplot can also do #boxplot.
+
+#PERSONAL NUTRITIONIST VIA OPTIMIZATION
+
+#The personal goal is to eat less sugar (in fact, as little as possible), while #maintaining other nutritional requirements. The requirement for daily intake is #summarized the following table (modified from FDA food labeling regulation documents):
+
+# 	energy	protein	sugar	fat	fiber	VC
+#lower bound	2000	50	NA	NA	25	60
+#upper bound	2500	70	NA	65	NA	NA
+
+#The Decision Variables
+#Open the csv file and inspect. How many decision variables will there be in your #optimization formulation?
+#There are 32 rows of data, excluding header. Each food item needs its own decision #variable
+
+#What type of decision variables should be used in the optimization formulation?
+#Continuous variables should be used, as the food amount can be fractional. However, the #amount of food cannot be negative.
+
+#Constraints
+#The consumer needs to satisfy the lower bound and upper bound constraints for the other #nutritional requirements (energy, protein, etc.). How many lower bound constraints are #there? From table above, there are 4 non-NA values in the lower bound row. Energy, #protein, fiber, and Vitamin C.
+#How many constraints correspond to the upper bound requirements?
+#Energy, protein, and fat.
+
+#Set up and solve this optimization problem in the spreadsheet software of your choice #(Excel, Google Sheets with OpenSolver, LibreOffice, or OpenOffice). Remember to define #all of your decision variables, your objective, and your constraints.
+#Which of the following foods are selected by the model (non-zero amount)?
+#beans, butter, kale, rice.
+#What is the total amount of sugar intake? 0.114
+
+#The consumer wants to build muscle mass. She reads from her sports magazine that athletes #who regularly engage in high-intensity workouts can benefit from more protein intake. The #new plan is to change the upper bound of protein from 70 grams to 150 grams.
+#Which food items CANNOT be in the new optimal diet? blueberries, mcdonald’s, rice
+#What's the new total sugar intake? 0, This can be determined by re-solving the model by #changing the upper bound.
+
+#In many parts of the world, the availability of foods, especially fresh fruits and #vegetables, can be somewhat limited. Suppose the customer lives at a place where there is #only access to rice, beans, cabbage, and wheat flour. Which ones are selected by the #model? beans, cabbage, rice
+
+#What's the new total sugar intake? 2.322
+#This can be determined by re-solving the model but limiting the decision variables to the #four above items. Make sure to change the quantities of other items to zero before re-#solving.
+
